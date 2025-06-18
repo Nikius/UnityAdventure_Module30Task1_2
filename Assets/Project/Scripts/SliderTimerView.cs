@@ -12,8 +12,8 @@ namespace Project.Scripts
 
         private void OnDestroy()
         {
-            _customTimer.ElapsedTimeUpdated -= OnElapsedTimeUpdated;
-            _customTimer.StateUpdated -= OnStateUpdated;
+            _customTimer.ElapsedTime.Updated -= OnElapsedTimeUpdated;
+            _customTimer.IsRunning.Updated -= OnStateUpdated;
             _customTimer.OnTimerEnded -= OnTimerEnded;
         }
 
@@ -21,8 +21,8 @@ namespace Project.Scripts
         {
             _customTimer = customTimer;
             
-            _customTimer.ElapsedTimeUpdated += OnElapsedTimeUpdated;
-            _customTimer.StateUpdated += OnStateUpdated;
+            _customTimer.ElapsedTime.Updated += OnElapsedTimeUpdated;
+            _customTimer.IsRunning.Updated += OnStateUpdated;
             _customTimer.OnTimerEnded += OnTimerEnded;
             
             Reset();

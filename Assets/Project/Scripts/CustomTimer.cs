@@ -5,18 +5,19 @@ using UnityEngine;
 
 namespace Project.Scripts
 {
-    public class CustomTimer: IDisposable
+    public class CustomTimer
     {
-        public event Action<float, float> ElapsedTimeUpdated;
-        public event Action<bool, bool> StateUpdated;
         public event Action OnTimerEnded;
         
         private readonly MonoBehaviour _coroutineRunner;
         private Coroutine _currentCoroutine;
         
+        private readonly ReactiveVariable<float> _elapsedTime;
+        private readonly ReactiveVariable<bool> _isRunning;
+        
         public float Duration { get; }
-        public ReactiveVariable<float> ElapsedTime { get; }
-        public ReactiveVariable<bool> IsRunning { get; }
+        public IReadOnlyVariable<float> ElapsedTime => _elapsedTime;
+        public IReadOnlyVariable<bool> IsRunning => _isRunning;
         
         public bool IsTimerPaused() => IsRunning.Value == false && _currentCoroutine is not null;
 
@@ -25,23 +26,14 @@ namespace Project.Scripts
             Duration = duration;
             _coroutineRunner = coroutineRunner;
             
-            ElapsedTime = new ReactiveVariable<float>();
-            ElapsedTime.Updated += OnElapsedTimeUpdated;
-            
-            IsRunning = new ReactiveVariable<bool>();
-            IsRunning.Updated += OnStateUpdated;
-        }
-
-        public void Dispose()
-        {
-            ElapsedTime.Updated -= OnElapsedTimeUpdated;
-            IsRunning.Updated -= OnStateUpdated;
+            _elapsedTime = new ReactiveVariable<float>();
+            _isRunning = new ReactiveVariable<bool>();
         }
 
         public void Reset()
         {
-            ElapsedTime.Value = 0;
-            IsRunning.Value = false;
+            _elapsedTime.Value = 0;
+            _isRunning.Value = false;
             
             if (_currentCoroutine != null)
                 _coroutineRunner.StopCoroutine(_currentCoroutine);
@@ -49,29 +41,25 @@ namespace Project.Scripts
 
         public void Start()
         {
-            IsRunning.Value = true;
+            _isRunning.Value = true;
             _currentCoroutine = _coroutineRunner.StartCoroutine(RunRoutine());
         }
 
-        public void Pause() => IsRunning.Value = false;
+        public void Pause() => _isRunning.Value = false;
 
-        public void Continue() => IsRunning.Value = true;
-
-        private void OnStateUpdated(bool newValue, bool oldValue) => StateUpdated?.Invoke(newValue, oldValue);
-
-        private void OnElapsedTimeUpdated(float newValue, float oldValue) => ElapsedTimeUpdated?.Invoke(newValue, oldValue);
+        public void Continue() => _isRunning.Value = true;
 
         private IEnumerator RunRoutine()
         {
             while (ElapsedTime.Value < Duration)
             {
                 if (IsRunning.Value)
-                    ElapsedTime.Value += Time.deltaTime;
+                    _elapsedTime.Value += Time.deltaTime;
                 
                 yield return null;
             }
             
-            IsRunning.Value = false;
+            _isRunning.Value = false;
             _currentCoroutine = null;
             OnTimerEnded?.Invoke();
         }

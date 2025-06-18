@@ -2,7 +2,7 @@
 
 namespace Project.Scripts.Utility
 {
-    public class ReactiveVariable<T> where T : IEquatable<T> 
+    public class ReactiveVariable<T>: IReadOnlyVariable<T> where T : IEquatable<T> 
     {
         public event Action<T, T> Updated;
         
